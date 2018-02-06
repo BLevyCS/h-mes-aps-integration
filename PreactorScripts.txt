@@ -1,0 +1,204 @@
+Preactor Scripts:
+
+________________________________________________________
+Import SIMATIC IT Equipment (Unit):
+________________________________________________________
+Table name - Resources
+Connection Type - Data Provider
+Table Import - Secondary Constraints
+========================================================
+Query String -
+SELECT equip.EquipmentName
+FROM View_EquipmentNames equip
+DB - Preactor
+========================================================
+Settings - 
+* Append New Records
+* Update Current Records
+* Delete Old Records
+Imports
+* EquipmentName - Name - String (ID)
+________________________________________________________
+Import SIMATIC IT Entry Statuses:
+________________________________________________________
+Table name - Operation Status
+Connection Type - Data Provider
+Table Import 
+========================================================
+Query String - 
+SELECT [id] as StatusId,
+COALESCE(Description,'') as Description
+FROM [dbo].[POMV_ETRY_STAT]
+DB - SitMesDb
+========================================================
+Settings -
+* Clear Preactor Table
+* Append New Records
+Imports - 
+StatusId - Operation Status Name - String (ID)
+Description - Description - String
+________________________________________________________
+Import SIMATIC IT Order Statuses:
+________________________________________________________
+Table Name - Order Status
+Connection Type - Data Provider
+Table Import
+========================================================
+Query String -
+SELECT id as StatusId, 
+COALESCE(Description,'') as Description
+FROM [dbo].[POMV_ORDR_STAT]
+DB - SitMesDb
+========================================================
+Settings -
+* Clear Preactor Table
+* Append New Records
+Imports - 
+StatusId - Operation Status Name - String (ID)
+Description - Description - String
+________________________________________________________
+Import SIMATIC IT Equipment (Workcenter):
+________________________________________________________
+Table Name - Resource Groups
+Connection Type - Data Provider
+Table Import - Resources
+========================================================
+Query String -
+SELECT equip.EquipmentName,
+equip.EquipmentId,
+equip.EquipmentSuperior
+FROM View_EquipmentNames equip
+DB - Preactor
+========================================================
+Settings -
+* Append New Records
+* Update Current Records
+* Delete Old Records
+Imports - 
+EquipmentName - Name - String (ID)
+________________________________________________________
+Import SIMATIC IT Equipment Relationship
+________________________________________________________
+Table Name - Resource Groups
+Connection Type - Data Provider
+Matrix Import - Resources
+========================================================
+Query String -
+SELECT equip.EquipmentName,
+equip.EquipmentSuperior
+FROM View_EquipmentNames equip
+DB - Preactor
+========================================================
+Settings -
+* Append New Records
+Imports - (Resource Groups)
+* EquipmentName - Name - String (ID)
+Imports - (Resources)
+* EquipmentSuperior - Name - String (ID)
+________________________________________________________
+Import SIMATIC IT Orders
+________________________________________________________
+Table Name - Orders
+Connection Type - Data Provider
+Data Set - Schedule
+Table Import - Internal Pegging Information
+========================================================
+Query String -
+SELECT * From View_OrderInfo
+ORDER BY 
+orderid, sequence
+DB - Preactor
+========================================================
+Settings - 
+* Append New Records
+* Rebuild Family
+* Update Current Records
+Additional Options - DOLOADSAVE
+Imports -
+* OrderPrimaryKey - MES Order PK - Number (ID)
+* OrderId - Order No. - String (ID)
+* DueDate - Due Date - Date MM/dd/yyyy
+* Produced Quantity - Mid Batch Quantity - Number
+* OrderStatus - Order Status - String
+* EntryId - Operation Name - String (ID)
+* EntryPrimaryKey - MES Operation PK - Number
+* EntryStatusId - Operation Progress - String
+* Sequence - Op. No. - Number (ID)
+* ProcTimeType - Process Time Type - String
+________________________________________________________
+Import Orders Resource Data
+________________________________________________________
+Table Name - Orders
+Connection Type - Data Provider
+Data Set - Schedule
+Matrix Import - Resource Data
+========================================================
+Query String -
+SELECT ords.OrderNo,
+       ords.OpNo,
+       runRates.Equipment AS Resource,
+       1 AS AutomaticSequencing,
+       runRates.UnitsPerHour AS ResourceRatePerHour
+FROM Userdata.orders AS ords
+JOIN dbo.View_MesRunRates runRates ON ords.operationName = runRates.operationName
+DB - Preactor
+========================================================
+Settings - 
+* Clear all matrix records
+* Append new records
+Additional opetions - DOLOADSAVE
+Imports -
+* OrderNo - Order No. - String (ID) 
+* OpNo - Op. No. - Number (ID)
+________________________________________________________
+Update Complete Ops
+________________________________________________________
+Table Name - Orders
+Connection Type - Data Provider
+Data Set - Schedule
+Table Import - Internal Pegging Information
+========================================================
+Query String -
+SELECT 
+OrderID,
+Sequence AS Opno,
+ActualStart,
+Case When ActualEndTime = '1/1/1900 12:00:00 AM' Then ActualStart + .25 else ActualEndTime end as ActualEndTime,
+ProducedQuantity,
+WorkCenterUnit,
+EntryStatusId,
+1 as UseActualTimes
+FROM dbo.View_OrderInfo
+WHERE EntryStatusId= 'Complete' 
+DB - Preactor
+========================================================
+Settings - 
+* Update Current Records
+Additional opetions - DOLOADSAVE
+Imports -
+* OrderId - Order No. - String (ID)
+* Opno - Op. No. - Number (ID)
+* ActualStart - Setup Start - Date MM/dd/yyyy
+* ActualStart - Start Time - Date MM/dd/yyyy
+* ActualEndTime - End Time - Date MM/dd/yyyy
+* ActualEndTime - Mid Batch Time - Date MM/dd/yyyy
+* ProducedQuantity - Mid Batch Quantity - Number
+* EntryStatusId - Operation Progress - Number
+* UseActualTimes - Use Actual Times - Number
+________________________________________________________
+Update Downtime Exceptions
+________________________________________________________
+Table Name - Resources
+Connection Type - Data Provider
+Table Import - Secondary Constraints
+========================================================
+Query String -
+EXEC [Calendar].[InsertDowntimeExceptionsLMS]
+
+SELECT Name from Userdata.Resources
+DB - Preactor
+========================================================
+Settings - 
+* Update current records
+Imports -
+* Name - Name - String (ID)
