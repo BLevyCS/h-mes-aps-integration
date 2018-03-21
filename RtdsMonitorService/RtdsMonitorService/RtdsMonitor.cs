@@ -26,44 +26,48 @@
     }
 
     /// <summary>
-    /// Actions to be performed when service starts
+    /// Actions to be performed when service starts. 
+    /// Pulls equipment from OEE and populates current status for each equipment.
+    /// Sets timer tick rate and starts timer.
     /// </summary>
     /// <param name="args"></param>
     protected override void OnStart(string[] args)
     {
       EventLog.WriteEntry("Pulling equipment from OEE and populating initial status", EventLogEntryType.Information);
-      var timeCats = _currentStatusBread.Select(null, -1, -1, "");
-      _mostRecentStatuses = new List<DTMCurrentStatus>(timeCats);
+      var currentEquipmentStatuses = _currentStatusBread.Select(null, -1, -1, "");
+      _mostRecentStatuses = new List<DTMCurrentStatus>(currentEquipmentStatuses);
 
-      foreach (var stat in _mostRecentStatuses)
-        CallPreactorTable(stat);
+      foreach (var downtimeStatus in _mostRecentStatuses)
+        InsertStatus(downtimeStatus);
 
       var tickTimeInSeconds = Int32.Parse(ConfigurationManager.AppSettings["tickTimeInSeconds"]);
-      _rtdsTimerPoller = new Timer(rtdsTimerPoller_Tick, null, 0, tickTimeInSeconds * 1000);
+      _rtdsTimerPoller = new Timer(RtdsTimerPoller_Tick, null, 0, tickTimeInSeconds * 1000);
     }
 
     /// <summary>
-    /// Handles the timer ticking over
+    /// Actions to perform when the timer ticks over.
     /// </summary>
-    private void rtdsTimerPoller_Tick(object state)
+    private void RtdsTimerPoller_Tick(object state)
     {
-      RtdsStuff();
+      PollRtdsEquipment();
     }
 
     /// <summary>
-    /// Looks at each piece of equipment in OEE
+    /// Calls CompareLastStatus on each timeCategory to see if it changed.
     /// </summary>
-    private void RtdsStuff()
+    private void PollRtdsEquipment()
     {
-      var timeCats = _currentStatusBread.Select(null, -1, -1, "");
-      foreach (var cat in timeCats)
+      var timeCategories = _currentStatusBread.Select(null, -1, -1, "");
+      foreach (var timeCategory in timeCategories)
       {
-        CompareLastStatus(cat);
+        CompareLastStatus(timeCategory);
       }
     }
 
     /// <summary>
     /// Checks current status against cached last status.
+    /// If it's different, remove the last status, add the new status, and
+    /// call InsertStatus to update the previous status, and add the new current status.
     /// </summary>
     /// <param name="currentStatus">Downtime status of one OEE equipment</param>
     public void CompareLastStatus(DTMCurrentStatus currentStatus)
@@ -78,7 +82,7 @@
       {
         _mostRecentStatuses.Remove(lastStatus);
         _mostRecentStatuses.Add(currentStatus);
-        CallPreactorTable(currentStatus, lastStatus);
+        InsertStatus(currentStatus, lastStatus);
       }
     }
 
@@ -108,7 +112,7 @@
     /// <param name="currentStatus">Current status for a given piece of equipment</param>
     /// <param name="lastStatus">Previous status for a given piece of equipment</param>
 
-    public void CallPreactorTable(DTMCurrentStatus currentStatus, DTMCurrentStatus lastStatus = null)
+    public void InsertStatus(DTMCurrentStatus currentStatus, DTMCurrentStatus lastStatus = null)
     {
       string configConnectionString = ConfigurationManager.ConnectionStrings["MOMDEVDBSRV"].ConnectionString;
       using (var sqlConnection = new SqlConnection(configConnectionString))
