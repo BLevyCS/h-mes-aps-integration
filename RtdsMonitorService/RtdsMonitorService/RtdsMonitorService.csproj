@@ -38,15 +38,15 @@
   <ItemGroup>
     <Reference Include="BreadBase, Version=6.3.2.0, Culture=neutral, PublicKeyToken=c0f6ca1d08084ae8, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>bin\Debug\BreadBase.dll</HintPath>
+      <HintPath>Breadlibs\BreadBase.dll</HintPath>
     </Reference>
     <Reference Include="OEEBread, Version=1.0.0.0, Culture=neutral, PublicKeyToken=c0f6ca1d08084ae8, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RtdsMonitorConsole\RtdsMonitorConsole\bin\Debug\OEEBread.dll</HintPath>
+      <HintPath>Breadlibs\OEEBread.dll</HintPath>
     </Reference>
     <Reference Include="OEETypes, Version=1.0.0.0, Culture=neutral, PublicKeyToken=c0f6ca1d08084ae8, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\RtdsMonitorConsole\RtdsMonitorConsole\bin\Debug\OEETypes.dll</HintPath>
+      <HintPath>Breadlibs\OEETypes.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
